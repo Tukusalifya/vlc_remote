@@ -4,6 +4,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/painting.dart';
 import 'package:iconly/iconly.dart';
+import 'package:vlc_remote/Widgets/CustomListItem.dart';
 
 class Playlistscreen extends StatefulWidget {
   const Playlistscreen({super.key});
@@ -18,6 +19,7 @@ class _PlaylistscreenState extends State<Playlistscreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
+        elevation: 0,
         backgroundColor: Colors.white,
         title: const Center(
           child: Text(
@@ -29,8 +31,11 @@ class _PlaylistscreenState extends State<Playlistscreen> {
           ),
         ),
       ),
-      body: Container(
-
+      body: ListView.builder(
+          itemCount: 100,
+          itemBuilder: (context, index){
+            return const Customlistitem();
+          }
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {

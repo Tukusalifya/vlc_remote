@@ -2,13 +2,16 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:iconly/iconly.dart';
+import 'package:vlc_remote/Services/VlcService.dart';
 
 class Remotebuttons extends StatelessWidget {
   final IconData icon;
+  final void Function() onTap;
 
   const Remotebuttons({
     super.key,
-    required this.icon
+    required this.icon,
+    required this.onTap
   });
 
   @override
@@ -21,6 +24,7 @@ class Remotebuttons extends StatelessWidget {
         onTap: (){
           HapticFeedback.lightImpact();
           print("tapped");
+          onTap();
         },
         child: SizedBox(
           width: 130,
