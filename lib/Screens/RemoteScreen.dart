@@ -39,41 +39,70 @@ class _RemotescreenState extends State<Remotescreen> {
       body: Container(
           child: Column(
             children: [
-              Center(
-                child: Text(
-                  "Now Playing: The Emminence in shadow"
-                ),
+              Row(
+                children: [
+                  SizedBox(width: 25),
+                  Icon(IconlyLight.video),
+                  SizedBox(width: 10),
+                  Text(
+                      "The Emminence in shadow"
+                  ),
+                ]
               ),
-              SizedBox(height: 120),
+              SizedBox(height: 10),
+              Row(
+                  children: [
+                    SizedBox(width: 25),
+                    Icon(IconlyLight.volume_up),
+                    SizedBox(width: 10),
+                    Text(
+                        "200"
+                    ),
+                  ]
+              ),
+              SizedBox(height: 10),
+              Row(
+                  children: [
+                    SizedBox(width: 25),
+                    Icon(IconlyLight.time_square),
+                    SizedBox(width: 10),
+                    Text(
+                        "1h 45m"
+                    ),
+                  ]
+              ),
+
+
+              SizedBox(height: 50),
               Remotebuttonrow(
-                icon_one: Icons.skip_previous,
-                icon_two: Icons.skip_next,
+                icon_one: Icons.skip_previous_rounded,
+                icon_two: Icons.skip_next_rounded,
+                onTap_one: vlc.previousChapter,
+                onTap_two: vlc.nextChapter
+              ),
+              SizedBox(height: 15),
+              Remotebuttonrow(icon_one: IconlyBold.arrow_left_2,
+                icon_two: IconlyBold.arrow_right_2,
                 onTap_one: vlc.previous,
                 onTap_two: vlc.next
               ),
               SizedBox(height: 15),
-              Remotebuttonrow(icon_one: Icons.arrow_left,
-                icon_two: Icons.arrow_right,
-                onTap_one: vlc.fastForward,
-                onTap_two: vlc.rewind
+              Remotebuttonrow(icon_one: Icons.fast_rewind_rounded,
+                icon_two: Icons.fast_forward_rounded,
+                onTap_one: vlc.rewind,
+                onTap_two: vlc.fastForward
               ),
               SizedBox(height: 15),
-              Remotebuttonrow(icon_one: Icons.fast_rewind,
-                icon_two: Icons.fast_forward,
-                onTap_one: vlc.fastForward,
-                onTap_two: vlc.rewind
-              ),
-              SizedBox(height: 15),
-              Remotebuttonrow(icon_one: Icons.volume_down,
-                icon_two: Icons.volume_up,
-                onTap_one: vlc.addVolume,
-                onTap_two: vlc.decreaseVolume
+              Remotebuttonrow(icon_one: IconlyBold.volume_down,
+                icon_two: IconlyBold.volume_up,
+                onTap_one: vlc.decreaseVolume,
+                onTap_two: vlc.addVolume
               ),
               SizedBox(height: 15),
               Remotebuttonrow(icon_one: Icons.fullscreen_rounded,
                 icon_two: Icons.fullscreen_exit_rounded,
-                onTap_one: vlc.addVolume,
-                onTap_two: vlc.decreaseVolume
+                onTap_one: vlc.fullscreen,
+                onTap_two: vlc.fullscreen
               ),
               SizedBox(height: 20),
 

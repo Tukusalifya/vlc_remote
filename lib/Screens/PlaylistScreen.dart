@@ -6,6 +6,8 @@ import 'package:flutter/painting.dart';
 import 'package:iconly/iconly.dart';
 import 'package:vlc_remote/Widgets/CustomListItem.dart';
 
+import '../Services/VlcService.dart';
+
 class Playlistscreen extends StatefulWidget {
   const Playlistscreen({super.key});
 
@@ -14,6 +16,21 @@ class Playlistscreen extends StatefulWidget {
 }
 
 class _PlaylistscreenState extends State<Playlistscreen> {
+  final VlcService vlc = VlcService(host: '192.168.8.100', port: '8080', password: '1234');
+  late List<Map<String, dynamic>> playlist = [];
+
+  void loadPlaylist() async{
+    final List<Map<String, dynamic>>  middlePLaylist = [];
+    middlePLaylist.addAll(await vlc.fetchPlaylist());
+    setState(() {
+      playlist = middlePLaylist;
+    });
+  }
+  @override
+  void initState(){
+    super.initState();
+    loadPlaylist();
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -32,9 +49,11 @@ class _PlaylistscreenState extends State<Playlistscreen> {
         ),
       ),
       body: ListView.builder(
-          itemCount: 100,
+          itemCount: playlist.length,
           itemBuilder: (context, index){
-            return const Customlistitem();
+            String filename = playlist[index]['filename'] as String;
+            String id = playlist[index]['id'] as String;
+            return Customlistitem(filename: filename, id: id,);
           }
       ),
       floatingActionButton: FloatingActionButton(

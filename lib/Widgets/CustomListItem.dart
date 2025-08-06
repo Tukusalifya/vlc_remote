@@ -4,7 +4,9 @@ import 'package:flutter/widgets.dart';
 import 'package:iconly/iconly.dart';
 
 class Customlistitem extends StatelessWidget {
-  const Customlistitem({super.key});
+  final String filename;
+  final String id;
+  const Customlistitem({super.key, required this.filename, required this.id});
 
   @override
   Widget build(BuildContext context) {
@@ -40,10 +42,10 @@ class Customlistitem extends StatelessWidget {
                 ),
               ),
               SizedBox(width: 10),
-              const SizedBox(
+               SizedBox(
                 width: 180,
                 child: Text(
-                  'The Eminence in Shadow',
+                  filename,
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
