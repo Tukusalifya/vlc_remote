@@ -4,6 +4,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/painting.dart';
 import 'package:iconly/iconly.dart';
+import 'package:provider/provider.dart';
+import 'package:vlc_remote/Providers/ConnectionProvider.dart';
 import 'package:vlc_remote/Widgets/CustomListItem.dart';
 
 import '../Services/VlcService.dart';
@@ -16,9 +18,23 @@ class Playlistscreen extends StatefulWidget {
 }
 
 class _PlaylistscreenState extends State<Playlistscreen> {
-  final VlcService vlc = VlcService(host: '192.168.8.100', port: '8080', password: '1234');
+  late VlcService vlc;
+  late Connectionprovider connectionSettings;
   late List<Map<String, dynamic>> playlist = [];
 
+
+  @override
+  void initState(){
+    super.initState();
+    connectionSettings = Provider.of<Connectionprovider>(context, listen: false);
+    vlc = VlcService(
+        host: connectionSettings.host,
+        port: connectionSettings.port,
+        password:  connectionSettings.password,
+    );
+    loadPlaylist();
+    connectionSettings.addListener(onSettingsChanged);
+  }
   void loadPlaylist() async{
     final List<Map<String, dynamic>>  middlePLaylist = [];
     middlePLaylist.addAll(await vlc.fetchPlaylist());
@@ -26,11 +42,22 @@ class _PlaylistscreenState extends State<Playlistscreen> {
       playlist = middlePLaylist;
     });
   }
-  @override
-  void initState(){
-    super.initState();
-    loadPlaylist();
+
+  void onSettingsChanged() async{
+      vlc = VlcService(
+        host: connectionSettings.host,
+        port: connectionSettings.port,
+        password: connectionSettings.password,
+      );
+      loadPlaylist();
   }
+
+  @override
+  void dispose() {
+    connectionSettings.removeListener(onSettingsChanged);
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -52,8 +79,19 @@ class _PlaylistscreenState extends State<Playlistscreen> {
           itemCount: playlist.length,
           itemBuilder: (context, index){
             String filename = playlist[index]['filename'] as String;
-            String id = playlist[index]['id'] as String;
-            return Customlistitem(filename: filename, id: id,);
+            int id = playlist[index]['id'];
+            bool current = playlist[index]['playing'];
+            return Customlistitem(
+              filename: filename,
+              id: id,
+              current: current,
+              onCallback: () {
+                setState(() {
+                  loadPlaylist();
+                });
+              },
+              vlc: vlc,
+            );
           }
       ),
       floatingActionButton: FloatingActionButton(

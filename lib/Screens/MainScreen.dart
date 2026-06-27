@@ -32,25 +32,9 @@ class _MainscreenState extends State<Mainscreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: pages[selectedNavindex],
-      bottomNavigationBar: Theme(
-        data: Theme.of(context).copyWith(
-          splashFactory: NoSplash.splashFactory,
-          highlightColor: Colors.transparent,
-        ),
-        child: BottomNavigationBar(
-          type: BottomNavigationBarType.fixed,
-          backgroundColor: Colors.white,
-          selectedItemColor: Colors.black87,
-          unselectedItemColor: Colors.black54,
-          currentIndex: selectedNavindex,
-          onTap: navBarTap,
-          items: [
-            botNavItem(Icons.list,"Playlist"),
-            botNavItem(Icons.tv, "Remote"),
-            botNavItem(IconlyLight.setting,"Settings"),
-          ],
-
-        ),
+      bottomNavigationBar: CustomBottomNavigationBar(
+        selectedIndex: selectedNavindex,
+        onTap: navBarTap,
       ),
     );
   }
