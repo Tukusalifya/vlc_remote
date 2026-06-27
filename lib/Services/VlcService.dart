@@ -67,13 +67,29 @@ class VlcService{
           var items = data['children'][0]['children'];
 
           for(var item in items){
-            playlist.add({
-              'id': item['id'],
-              'filename': item['name'],
-            });
-            print('printing');
-            print(item['name']);
-            print(item['id']);
+            bool current = false;
+
+            if(item.containsKey('current')){
+                current = true;
+                playlist.add({
+                  'id': int.parse(item['id']),
+                  'filename': item['name'],
+                  'duration': item['duration'],
+                  'playing': current
+                });
+            }else{
+              playlist.add({
+                'id': int.parse(item['id']),
+                'filename': item['name'],
+                'duration': item['duration'],
+                'playing': current
+              });
+            }
+
+            print('Playlist');
+            print('name:${item['name']}');
+            print('id: ${item['id']}');
+            print('Now playing: ${current}');
           }
         }
 
@@ -89,9 +105,10 @@ class VlcService{
 
   }
 
-  Future<String> fetchCurrentlyPlaying()async{
+  Future <Map<String,dynamic>> fetchCurrentStatus()async{
 
     final url = Uri.parse('http://$host:$port/requests/playlist.json');
+    final url2 = Uri.parse('http://$host:$port/requests/status.json');
     final auth = 'Basic ${base64Encode(utf8.encode(':$password'))}';
 
     try{
@@ -101,36 +118,78 @@ class VlcService{
           'Authorization': auth,
         },
       );
+      final response2 = await http.get(
+        url2,
+        headers: {
+          'Authorization': auth,
+        },
+      );
 
-      if(response.statusCode == 200){
+      if(response.statusCode == 200 && response2.statusCode == 200){
         print('Command executed successfully');
         final data = jsonDecode(response.body);
-        String currentlyPlaying  = '';
+        final data2 = jsonDecode(response2.body);
+
+        Map<String, dynamic> currentlyStatus  = {};
+        String currentlyPlaying = '';
+        String duration = '';
+        int volume = 0;
+
+        print('Playlist JSON: ${jsonEncode(data)}');
+        print('Status JSON: ${jsonEncode(data2)}');
 
         if(data['children'] != null && data['children'].isNotEmpty){
           var items = data['children'][0]['children'];
+          // print(items);
 
           for(var item in items){
-            if (item['current'] == 'current'){
+            print(item);
+            if (item.containsKey('current')){
+              print('Yeah its workiing');
               currentlyPlaying = item['name'];
+              print(currentlyPlaying);
+              // duration = item['duration'];
+              // print(duration);
+            }else{
+              print('Nope its not workiing');
             }
           }
         }
+        // if(data2 != null && data2.isNotEmpty){
+        //    volume = int.parse(data2['volume']);
+        //    print(volume);
+        //
+        //     }
+        currentlyStatus = {
+          'current': currentlyPlaying,
+          // 'duration': duration,
+          // 'volume': volume
 
-        return currentlyPlaying;
+        };
+
+        return currentlyStatus;
 
       }else{
         print('Failed to load currently Playing item ${response.statusCode}');
-        return 'Nothing currently Playing';
+        return {
+          'current': 'Nothing currently playingss',
+          'duration': '00:00',
+          'volume': 0
+        };
       }
     }catch(e){
-      throw Exception('Failed to load VLC playlist');
+       throw Exception('Failed to load VLC playlist');
+
     }
 
   }
 
   void play(){
     sendCommand('pl_pause');
+  }
+
+  void playID(int id){
+    sendCommand('pl_play&id=$id');
   }
 
   void next(){
@@ -162,11 +221,11 @@ class VlcService{
   }
 
   void nextChapter(){
-    sendCommand('chapter_next');
+    sendCommand('next_chapter');
   }
 
   void previousChapter(){
-    sendCommand('chapter_prev');
+    sendCommand('prev_chapter');
   }
 
   void fullscreen(){
