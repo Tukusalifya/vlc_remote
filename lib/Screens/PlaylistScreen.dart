@@ -68,21 +68,27 @@ class _PlaylistscreenState extends State<Playlistscreen> {
     }).toList();
   }
 
-  void _onTilePlay(int id) async {
+  void _onTilePlay(int id) {
     // Optimistic UI Update: Mark this item as playing locally first
     setState(() {
-      for (var item in playlist) {
+      playlist = playlist.map((item) {
         if (item['id'] == id) {
-          item['playing'] = true;
-        } else {
-          item['playing'] = false;
+          return {
+            ...item,
+            'playing': true,
+          };
         }
-      }
+        return {
+          ...item,
+          'playing': false,
+        };
+      }).toList();
     });
 
     try {
       vlc.playID(id);
-      loadPlaylist(); // Refresh to sync actual status from VLC
+      Future.delayed(Duration(milliseconds: 300), loadPlaylist);
+
     } catch (e) {
       print('Error trying to play media: $e');
       loadPlaylist(); // Fallback reload
