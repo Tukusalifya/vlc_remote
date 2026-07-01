@@ -3,8 +3,15 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:vlc_remote/Providers/ConnectionProvider.dart';
 import 'package:vlc_remote/Screens/MainScreen.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'Models/ConnectionSettings.dart';
+import 'boxes.dart';
 
-void main() {
+
+void main() async{
+  await Hive.initFlutter();
+  Hive.registerAdapter(ConnectionSettingsAdapter());
+  connectionSettingsBox = await Hive.openBox<ConnectionSettings>('connectionSettingsBox');
   runApp(const MyApp());
 }
 
