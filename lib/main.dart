@@ -58,8 +58,8 @@ class MyApp extends StatelessWidget {
         ),
       ],
       child: MaterialApp(
-        debugShowCheckedModeBanner: true,
-        title: 'Flutter Demo',
+        debugShowCheckedModeBanner: false,
+        title: 'VLC Remote',
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
           useMaterial3: true,
