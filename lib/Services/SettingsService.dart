@@ -1,15 +1,15 @@
-import 'package:vlc_remote/Models/ConnectionSettings.dart';
 import '../boxes.dart';
+import 'package:vlc_remote/Models/ConnectionSettings.dart';
 
 class Settingsservice{
-  final ConnectionSettings connectionSettings;
+  final ConnectionSettings newSettings;
 
   Settingsservice({
-    required this.connectionSettings,
+    required this.newSettings,
 });
 
-// function to add a new default config => return the config settings.
-  Future<Map<String, dynamic>> addFavourite() async{
+// function to add a new default config.
+  Future<bool> addFavourite() async{
 
     for(final f in connectionSettingsBox.values){
       if (f.isDefault){
@@ -19,15 +19,46 @@ class Settingsservice{
       }
     }
 
-    connectionSettings.isDefault = true;
-    await connectionSettingsBox.add(connectionSettings);
+    await connectionSettingsBox.add(newSettings);
 
-    return {
-      'host': connectionSettings.host,
-      'port': connectionSettings.port,
-      'password': connectionSettings.password,
-      'name': connectionSettings.name
-    };
+    return true;
+
+  }
+
+// function to update a default config.
+  Future<bool> updateFavourite(
+      int key,
+      ) async {
+
+    if (newSettings.isDefault) {
+
+      for (final otherKey in connectionSettingsBox.keys) {
+
+        if (otherKey == key) continue;
+
+        final favourite =
+        connectionSettingsBox.get(otherKey)!;
+
+        if (favourite.isDefault) {
+
+          favourite.isDefault = false;
+
+          await connectionSettingsBox.put(
+            otherKey,
+            favourite,
+          );
+
+          break;
+        }
+      }
+    }
+
+    await connectionSettingsBox.put(
+      key,
+      newSettings,
+    );
+
+    return true;
   }
 
 

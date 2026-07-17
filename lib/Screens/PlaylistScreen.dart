@@ -1,9 +1,10 @@
+import '../Services/VlcService.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:vlc_remote/Providers/ConnectionProvider.dart';
 import 'package:vlc_remote/Constants.dart';
 import 'package:vlc_remote/Widgets/PlaylistTile.dart';
-import '../Services/VlcService.dart';
+import 'package:vlc_remote/Providers/ConnectionProvider.dart';
+
 
 class Playlistscreen extends StatefulWidget {
   const Playlistscreen({super.key});
@@ -15,9 +16,10 @@ class Playlistscreen extends StatefulWidget {
 class _PlaylistscreenState extends State<Playlistscreen> {
   late VlcService vlc;
   late Connectionprovider connectionSettings;
-  List<Map<String, dynamic>> playlist = [];
-  String searchQuery = '';
   final TextEditingController searchController = TextEditingController();
+  String searchQuery = '';
+  List<Map<String, dynamic>> playlist = [];
+
 
   @override
   void initState() {
@@ -69,7 +71,6 @@ class _PlaylistscreenState extends State<Playlistscreen> {
   }
 
   void _onTilePlay(int id) {
-    // Optimistic UI Update: Mark this item as playing locally first
     setState(() {
       playlist = playlist.map((item) {
         if (item['id'] == id) {
@@ -87,8 +88,7 @@ class _PlaylistscreenState extends State<Playlistscreen> {
 
     try {
       vlc.playID(id);
-      Future.delayed(Duration(milliseconds: 300), loadPlaylist);
-
+      Future.delayed(const Duration(milliseconds: 500), loadPlaylist);
     } catch (e) {
       print('Error trying to play media: $e');
       loadPlaylist(); // Fallback reload
@@ -149,15 +149,15 @@ class _PlaylistscreenState extends State<Playlistscreen> {
         backgroundColor: AppColors.surface,
         elevation: 0,
         scrolledUnderElevation: 0,
-        title: Row(
+        title: const Row(
           children: [
-            const Icon(
+            Icon(
               Icons.cast_connected,
               color: AppColors.primary,
               size: 24,
             ),
-            const SizedBox(width: 12),
-            const Text(
+            SizedBox(width: 12),
+            Text(
               'Playlist',
               style: TextStyle(
                 color: AppColors.primary,
@@ -240,7 +240,7 @@ class _PlaylistscreenState extends State<Playlistscreen> {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
         ),
-        child: const Icon(Icons.refresh, size: 28),
+        child: const Icon(Icons.refresh, size: 28, color: Colors.white),
       ),
     );
   }

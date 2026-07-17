@@ -14,10 +14,8 @@ class VlcService{
 });
 
 
-  Future<String?> sendCommand(String command, {String? value} )async{
-    print('in Func1');
+  Future<bool> sendCommand(String command, {String? value} )async{
     final String query = value == null ? 'command=$command' : 'command=$command&val=$value';
-
     final url = Uri.parse('http://$host:$port/requests/status.xml?$query');
     final auth = 'Basic ${base64Encode(utf8.encode(':$password'))}';
 
@@ -28,24 +26,21 @@ class VlcService{
           'Authorization': auth,
         },
       );
-      print('in Func');
-      if(response.statusCode == 200){
-        print('Command executed successfully');
-        return 'Command sent';
 
+      if(response.statusCode == 200){
+        return true;
 
       }else{
-        print('Failed to send command ${response.statusCode}');
+        return false;
       }
 
     }catch(e){
       print('Error: $e');
+      return false;
     }
-    return null;
   }
 
   Future<List<Map<String, dynamic>>> fetchPlaylist()async{
-
     final url = Uri.parse('http://$host:$port/requests/playlist.json');
     final auth = 'Basic ${base64Encode(utf8.encode(':$password'))}';
 
@@ -58,8 +53,6 @@ class VlcService{
       );
 
       if(response.statusCode == 200){
-        print('Command executed successfully');
-
         final data = jsonDecode(response.body);
         List<Map<String, dynamic>> playlist = [];
 
@@ -85,28 +78,22 @@ class VlcService{
                 'playing': current
               });
             }
-
-            print('Playlist');
-            print('name:${item['name']}');
-            print('id: ${item['id']}');
-            print('Now playing: ${current}');
           }
         }
 
         return playlist;
 
       }else{
-        print('Failed to load VLC playlist ${response.statusCode}');
         return [];
       }
     }catch(e){
-      throw Exception('Failed to load VLC playlist');
+      print('Failed to load VLC playlist');
+      return [];
     }
 
   }
 
   Future <Map<String,dynamic>> fetchCurrentStatus()async{
-
     final url = Uri.parse('http://$host:$port/requests/playlist.json');
     final url2 = Uri.parse('http://$host:$port/requests/status.json');
     final auth = 'Basic ${base64Encode(utf8.encode(':$password'))}';
@@ -126,60 +113,171 @@ class VlcService{
       );
 
       if(response.statusCode == 200 && response2.statusCode == 200){
-        print('Command executed successfully');
         final data = jsonDecode(response.body);
         final data2 = jsonDecode(response2.body);
 
         Map<String, dynamic> currentlyStatus  = {};
         String currentlyPlaying = '';
-        String duration = '';
         int volume = 0;
-
-        print('Playlist JSON: ${jsonEncode(data)}');
-        print('Status JSON: ${jsonEncode(data2)}');
+        String state = "";
 
         if(data['children'] != null && data['children'].isNotEmpty){
           var items = data['children'][0]['children'];
-          // print(items);
 
           for(var item in items){
-            print(item);
             if (item.containsKey('current')){
-              print('Yeah its workiing');
               currentlyPlaying = item['name'];
-              print(currentlyPlaying);
-              // duration = item['duration'];
-              // print(duration);
-            }else{
-              print('Nope its not workiing');
             }
           }
         }
-        // if(data2 != null && data2.isNotEmpty){
-        //    volume = int.parse(data2['volume']);
-        //    print(volume);
-        //
-        //     }
+        if(data2 != null && data2.isNotEmpty){
+           volume = data2['volume'];
+           state = data2['state'];
+        }
+
         currentlyStatus = {
           'current': currentlyPlaying,
-          // 'duration': duration,
-          // 'volume': volume
-
+          'volume': volume,
+          'state': state == "stopped" || state == "paused" ? false : true,
+          'success': true
         };
 
         return currentlyStatus;
 
       }else{
-        print('Failed to load currently Playing item ${response.statusCode}');
         return {
-          'current': 'Nothing currently playingss',
-          'duration': '00:00',
-          'volume': 0
+          'current': "",
+          'volume': 0,
+          'state': false,
+          'success': false
         };
       }
     }catch(e){
-       throw Exception('Failed to load VLC playlist');
+       print('Failed to load current status');
+       return {
+         'current': "",
+         'volume': 0,
+         'state': false,
+         'success': false
+       };
+    }
 
+  }
+
+  Stream<Map<String, dynamic>> fetchPlaybackInformation() async* {
+    final url = Uri.parse('http://$host:$port/requests/status.json');
+    final auth = 'Basic ${base64Encode(utf8.encode(':$password'))}';
+
+    while (true) {
+      try {
+        final response = await http.get(
+          url,
+          headers: {
+            'Authorization': auth,
+          },
+        );
+
+        if (response.statusCode == 200) {
+          final data = jsonDecode(response.body);
+          int duration = 0;
+          int currentTime = 0;
+          int volume = 0;
+          bool state = false;
+          String currentlyPlaying = "";
+
+          if (data != null && data.isNotEmpty) {
+
+            if (data.containsKey('information') &&
+                data['information'] != null &&
+                data['information'].containsKey('category') &&
+                data['information']['category'] != null &&
+                data['information']['category'].containsKey('meta')) {
+              final meta = data['information']['category']['meta'];
+              currentlyPlaying = meta['filename'] ?? meta['title'] ?? "";
+            }
+
+            duration = data['length'] ?? 0;
+            currentTime = data['time'] ?? 0;
+            volume = data['volume'] ?? 0;
+            state = data['state'] == "stopped" || data['state'] == "paused" ? false : true;
+          }
+
+          yield {
+            'duration': duration,
+            'currentTime': currentTime,
+            'currentlyPlaying': currentlyPlaying,
+            'volume': volume,
+            'state': state,
+            'success': true,
+          };
+        } else {
+          yield {
+            'duration': 0,
+            'currentTime': 0,
+            'currentlyPlaying': '',
+            'volume': 0,
+            'state': false,
+            'success': false,
+          };
+        }
+      } catch (e) {
+        yield {
+          'duration': 0,
+          'currentTime': 0,
+          'currentlyPlaying': '',
+          'volume': 0,
+          'state': false,
+          'success': false,
+        };
+      }
+      await Future.delayed(const Duration(seconds: 1));
+    }
+  }
+
+  Future <Map<String,dynamic>> fetchChapterInformation()async{
+    final url = Uri.parse('http://$host:$port/requests/status.json');
+    final auth = 'Basic ${base64Encode(utf8.encode(':$password'))}';
+    Map<String, dynamic> chapterInformation;
+
+    try{
+      final response = await http.get(
+        url,
+        headers: {
+          'Authorization': auth,
+        },
+      );
+
+      if(response.statusCode == 200){
+        final data = jsonDecode(response.body);
+        int currentChapter = 0;
+        List<dynamic> chapters = [];
+
+        if(data != null && data.isNotEmpty){
+          if(data.containsKey('information')){
+            currentChapter = data['information']['chapter'];
+            chapters = data['information']['chapters'];
+          }
+        }
+
+        chapterInformation = {
+          'currentChapter': currentChapter,
+          'chapters': chapters,
+        };
+
+        return chapterInformation;
+
+      }else{
+        return {
+          'currentChapter': '',
+          'chapters': [],
+        };
+      }
+    }catch(e){
+      print('Failed to load Chapter information');
+      return {
+        'currentChapter': '',
+        'chapters': [],
+      };
     }
 
   }
@@ -220,17 +318,18 @@ class VlcService{
     sendCommand('seek',value: '-10s');
   }
 
-  void nextChapter(){
-    sendCommand('next_chapter');
+  void seek({required int seconds}){
+    sendCommand('seek', value: '$seconds');
   }
 
-  void previousChapter(){
-    sendCommand('prev_chapter');
+  void chapter({required int chapter}){
+    sendCommand('chapter', value: '$chapter');
   }
 
   void fullscreen(){
     sendCommand('fullscreen');
   }
+
 
 
 }

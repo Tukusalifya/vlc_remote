@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:vlc_remote/Providers/ConnectionProvider.dart';
-import 'package:vlc_remote/Services/VlcService.dart';
 import 'package:vlc_remote/Constants.dart';
+import 'package:delightful_toast/delight_toast.dart';
+import 'package:vlc_remote/Services/VlcService.dart';
 import 'package:vlc_remote/Widgets/NowPlayingCard.dart';
-import 'package:vlc_remote/Widgets/TransportControls.dart';
 import 'package:vlc_remote/Widgets/ChapterControls.dart';
 import 'package:vlc_remote/Widgets/VolumeSliderBar.dart';
+import 'package:vlc_remote/Widgets/TransportControls.dart';
 import 'package:vlc_remote/Widgets/StopPlaybackButton.dart';
+import 'package:vlc_remote/Providers/ConnectionProvider.dart';
+import 'package:delightful_toast/toast/components/toast_card.dart';
+
 
 class Remotescreen extends StatefulWidget {
   const Remotescreen({super.key});
@@ -20,11 +23,12 @@ class _RemotescreenState extends State<Remotescreen> {
   late VlcService vlc;
   late Connectionprovider connectionSettings;
   late List<Map<String, dynamic>> playlist;
-  Map<String, dynamic> currentlyPlaying = {
-    'current': 'Nothing currently playing',
-  };
-  int volume = 75; // Default volume matching the Stitch design template (75%)
-  bool isPlaying = true; // Assume playing initially (displays pause button)
+  List<dynamic> chapters = [];
+  int? currentChapter;
+  String? currentlyPlaying;
+  int volume = 75;
+  bool isPlaying = true;
+  bool isConnected = false;
 
   @override
   void initState() {
@@ -37,6 +41,7 @@ class _RemotescreenState extends State<Remotescreen> {
     );
     loadPlaylist();
     fetchCurrent();
+    collectChapterInformation();
     connectionSettings.addListener(onSettingsChanged);
   }
 
@@ -53,12 +58,14 @@ class _RemotescreenState extends State<Remotescreen> {
   }
 
   void fetchCurrent() async {
-    Map<String, dynamic> middleCurrentlyPlaying = {};
+    Map<String, dynamic> currentStatus = {};
     try {
-      middleCurrentlyPlaying = Map.from(await vlc.fetchCurrentStatus());
+      currentStatus = Map.from(await vlc.fetchCurrentStatus());
       setState(() {
-        print(middleCurrentlyPlaying);
-        currentlyPlaying = Map.from(middleCurrentlyPlaying);
+        currentlyPlaying = currentStatus['current'];
+        volume = (currentStatus['volume'] / 2.56).round();
+        isPlaying = currentStatus['state'];
+        isConnected = currentStatus['success'];
       });
     } catch (e) {
       print('Error fetching current status: $e');
@@ -72,6 +79,18 @@ class _RemotescreenState extends State<Remotescreen> {
       password: connectionSettings.password,
     );
     loadPlaylist();
+  }
+
+  void collectChapterInformation() async{
+    Map<String, dynamic> chapterInformation = {};
+
+    chapterInformation = await vlc.fetchChapterInformation();
+
+    setState(() {
+      chapters = chapterInformation['chapters'];
+      currentChapter = chapterInformation['currentChapter'];
+
+    });
   }
 
   @override
@@ -106,14 +125,14 @@ class _RemotescreenState extends State<Remotescreen> {
             Container(
               width: 8,
               height: 8,
-              decoration: const BoxDecoration(
-                color: Colors.green,
+              decoration: BoxDecoration(
+                color: isConnected ? Colors.green : Colors.red,
                 shape: BoxShape.circle,
               ),
             ),
             const SizedBox(width: 4),
             Text(
-              'Connected',
+              isConnected ? "Connected" : "Disconnected",
               style: TextStyle(
                 color: AppColors.onSurfaceVariant.withOpacity(0.7),
                 fontSize: 12,
@@ -147,17 +166,70 @@ class _RemotescreenState extends State<Remotescreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 // Now Playing Card
-                NowPlayingCard(title: currentlyPlaying['current'] ?? ''),
+                StreamBuilder<Map<String, dynamic>>(
+                  stream: vlc.fetchPlaybackInformation(),
+                  builder: (context, snapshot) {
+                    int duration = 0;
+                    int currentTime = 0;
+                    String newPlaying = '';
+                    int newVolume = 0;
+                    bool newIsPlaying = true;
+
+                    if (snapshot.hasData) {
+                      final data = snapshot.data!;
+                      duration = data['duration'] ?? 0;
+                      currentTime = data['currentTime'] ?? 0;
+                      newPlaying = data['currentlyPlaying'] ?? '';
+                      newVolume = (data['volume'] / 2.56).round() ?? 0;
+                      newIsPlaying = data['state'];
+
+                      if (newPlaying.isNotEmpty) {
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          if (mounted && currentlyPlaying != newPlaying) {
+                            setState(() {
+                              currentlyPlaying = newPlaying;
+                            });
+                          }
+                        });
+           }
+
+                      final bool? streamConnected = data['success'];
+                      if (streamConnected != null) {
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          if (mounted && isConnected != streamConnected) {
+                            setState(() {
+                              isConnected = streamConnected;
+                              volume = newVolume;
+                              isPlaying = newIsPlaying;
+                            });
+                          }
+                        });
+                      }
+                    }
+
+                    return NowPlayingCard(
+                      title: currentlyPlaying ?? '',
+                      duration: duration,
+                      currentTime: currentTime,
+                      onSeek: (value) {
+                        vlc.seek(seconds: value);
+                      },
+                    );
+                  },
+                ),
                 const SizedBox(height: 24),
 
                 // Transport Controls
                 TransportControls(
                   isPlaying: isPlaying,
-                  onPlayPause: () {
-                    setState(() {
-                      isPlaying = !isPlaying;
-                    });
+                  onPlayPause: () async {
                     vlc.play();
+                    Map<String, dynamic> state = await vlc.fetchCurrentStatus();
+                    bool newIsPlaying = state['state'];
+
+                    setState(() {
+                      isPlaying = newIsPlaying;
+                    });
                   },
                   onPrevious: () {
                     vlc.previous();
@@ -181,10 +253,51 @@ class _RemotescreenState extends State<Remotescreen> {
                 // Chapter Controls
                 ChapterControls(
                   onPreviousChapter: () {
-                    vlc.previousChapter();
+                    int previousChapter = currentChapter! - 1;
+                    if(chapters.isNotEmpty){
+                      if(chapters.contains(previousChapter)){
+                        vlc.chapter(chapter: previousChapter);
+                        collectChapterInformation();
+                      }else{
+                        ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('No previous chapter available'),
+                              duration: Duration(seconds: 1),
+                            )
+                        );
+                      }
+                    }else{
+                      ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('No chapters found'),
+                            duration: Duration(seconds: 1),
+                          )
+                      );
+                    }
                   },
                   onNextChapter: () {
-                    vlc.nextChapter();
+                    if(chapters.isNotEmpty){
+                      int nextChapter = currentChapter! + 1;
+
+                      if(chapters.contains(nextChapter)){
+                        vlc.chapter(chapter: nextChapter);
+                        collectChapterInformation();
+                      }else{
+                        ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text( 'No next chapter available'),
+                              duration: Duration(seconds: 1),
+                            )
+                        );
+                      }
+                    }else{
+                      ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text( 'No chapters found'),
+                            duration: Duration(seconds: 1),
+                          )
+                      );
+                    }
                   },
                 ),
                 const SizedBox(height: 24),
