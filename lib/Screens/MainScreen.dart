@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:iconly/iconly.dart';
-import 'package:vlc_remote/Screens/PlaylistScreen.dart';
-import 'package:vlc_remote/Screens/RemoteScreen.dart';
-import 'package:vlc_remote/Screens/SettingsScreen.dart';
 import '../Widgets/CustomBottomNavigationBar.dart';
+import 'package:vlc_remote/Screens/RemoteScreen.dart';
+import 'package:vlc_remote/Screens/PlaylistScreen.dart';
+import 'package:vlc_remote/Screens/SettingsScreen.dart';
 
 class Mainscreen extends StatefulWidget {
   const Mainscreen({super.key});

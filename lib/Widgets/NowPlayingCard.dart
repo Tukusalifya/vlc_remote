@@ -1,18 +1,54 @@
 import 'package:flutter/material.dart';
 import 'package:vlc_remote/Constants.dart';
 
-class NowPlayingCard extends StatelessWidget {
+class NowPlayingCard extends StatefulWidget {
   final String title;
+  final int duration;
+  final int currentTime;
+  final ValueChanged<int>? onSeek;
 
   const NowPlayingCard({
     super.key,
     required this.title,
+    required this.duration,
+    required this.currentTime,
+    this.onSeek,
   });
 
   @override
+  State<NowPlayingCard> createState() => _NowPlayingCardState();
+}
+
+class _NowPlayingCardState extends State<NowPlayingCard> {
+  double? _dragValue;
+
+  String _formatTime(int seconds) {
+    if (seconds <= 0) return '00:00';
+    final int hours = seconds ~/ 3600;
+    final int minutes = (seconds % 3600) ~/ 60;
+    final int remainingSeconds = seconds % 60;
+
+    final String minutesStr = minutes.toString().padLeft(2, '0');
+    final String secondsStr = remainingSeconds.toString().padLeft(2, '0');
+
+    if (hours > 0) {
+      return '$hours:$minutesStr:$secondsStr';
+    } else {
+      return '$minutes:$secondsStr';
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final String displayTitle = title.isNotEmpty ? title : 'Nothing currently playing';
-    final String subtitle = title.isNotEmpty ? 'VLC Media Player' : 'No Active Session';
+    final String displayTitle = widget.title.isNotEmpty ? widget.title : 'Nothing currently playing';
+    final String subtitle = widget.title.isNotEmpty ? 'VLC Media Player' : 'No Active Session';
+
+    final int totalDuration = widget.duration;
+    final int current = _dragValue != null ? _dragValue!.round() : widget.currentTime;
+    final int displayCurrent = current.clamp(0, totalDuration > 0 ? totalDuration : 0);
+
+    final String timeElapsed = widget.title.isNotEmpty ? _formatTime(displayCurrent) : '--:--';
+    final String timeRemaining = widget.title.isNotEmpty ? _formatTime(totalDuration) : '--:--';
 
     return Container(
       height: 280,
@@ -112,59 +148,64 @@ class NowPlayingCard extends StatelessWidget {
           ),
           // Timeline Seek section
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             child: Column(
               children: [
-                // Visual progress line
-                Stack(
-                  children: [
-                    Container(
-                      height: 6,
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        color: AppColors.surfaceVariant,
-                        borderRadius: BorderRadius.circular(3),
-                      ),
-                    ),
-                    FractionallySizedBox(
-                      widthFactor: title.isNotEmpty ? 0.61 : 0.0,
-                      child: Container(
-                        height: 6,
-                        decoration: BoxDecoration(
-                          color: AppColors.primaryContainer,
-                          borderRadius: BorderRadius.circular(3),
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppColors.primaryContainer.withOpacity(0.4),
-                              blurRadius: 8,
-                            ),
-                          ],
+                // Slider seeking progress bar
+                SliderTheme(
+                  data: SliderTheme.of(context).copyWith(
+                    trackHeight: 6,
+                    activeTrackColor: AppColors.primaryContainer,
+                    inactiveTrackColor: AppColors.surfaceVariant,
+                    thumbColor: AppColors.primaryContainer,
+                    thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 8),
+                    overlayColor: AppColors.primaryContainer.withOpacity(0.2),
+                    overlayShape: const RoundSliderOverlayShape(overlayRadius: 16),
+                  ),
+                  child: Slider(
+                    value: displayCurrent.toDouble(),
+                    min: 0.0,
+                    max: totalDuration > 0 ? totalDuration.toDouble() : 1.0,
+                    onChanged: widget.title.isNotEmpty
+                        ? (value) {
+                            setState(() {
+                              _dragValue = value;
+                            });
+                          }
+                        : null,
+                    onChangeEnd: (value) {
+                      if (widget.onSeek != null) {
+                        widget.onSeek!(value.round());
+                      }
+                      setState(() {
+                        _dragValue = null;
+                      });
+                    },
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        timeElapsed,
+                        style: const TextStyle(
+                          color: AppColors.onSurfaceVariant,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      title.isNotEmpty ? '02:45' : '--:--',
-                      style: const TextStyle(
-                        color: AppColors.onSurfaceVariant,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
+                      Text(
+                        timeRemaining,
+                        style: const TextStyle(
+                          color: AppColors.onSurfaceVariant,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
-                    ),
-                    Text(
-                      title.isNotEmpty ? '04:30' : '--:--',
-                      style: const TextStyle(
-                        color: AppColors.onSurfaceVariant,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ],
             ),

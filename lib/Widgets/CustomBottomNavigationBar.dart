@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:vlc_remote/Constants.dart';
 
@@ -17,7 +16,7 @@ class CustomBottomNavigationBar extends StatelessWidget {
     return Container(
       height: 72,
       decoration: BoxDecoration(
-        color: AppColors.surfaceContainer.withOpacity(0.9),
+        color: Colors.white,
         // borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
         // boxShadow: [
         //   BoxShadow(
@@ -65,7 +64,7 @@ class CustomBottomNavigationBar extends StatelessWidget {
                 Icon(
                   icon,
                   color: isSelected
-                      ? AppColors.onPrimaryContainer
+                      ? Colors.white
                       : AppColors.onSurfaceVariant.withOpacity(0.7),
                   size: 24,
                 ),
@@ -74,7 +73,7 @@ class CustomBottomNavigationBar extends StatelessWidget {
                   label,
                   style: TextStyle(
                     color: isSelected
-                        ? AppColors.onPrimaryContainer
+                        ? Colors.white
                         : AppColors.onSurfaceVariant.withOpacity(0.7),
                     fontSize: 12,
                     fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,

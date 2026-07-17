@@ -47,9 +47,9 @@ class VolumeSliderBar extends StatelessWidget {
                 overlayShape: const RoundSliderOverlayShape(overlayRadius: 16.0),
               ),
               child: Slider(
-                value: volume.clamp(0, 100).toDouble(),
+                value: volume.clamp(0, 200).toDouble(),
                 min: 0,
-                max: 100,
+                max: 200,
                 onChanged: (val) {
                   onVolumeChanged(val.round());
                 },
