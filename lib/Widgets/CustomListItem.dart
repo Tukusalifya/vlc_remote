@@ -1,7 +1,5 @@
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:iconly/iconly.dart';
+import 'package:flutter/material.dart';
 import 'package:vlc_remote/Services/VlcService.dart';
 
 class Customlistitem extends StatefulWidget {
@@ -10,6 +8,7 @@ class Customlistitem extends StatefulWidget {
   final bool current;
   final VoidCallback onCallback;
   final VlcService vlc;
+
   const Customlistitem({
     super.key,
     required this.filename,
@@ -58,13 +57,13 @@ class _CustomlistitemState extends State<Customlistitem> {
                       widget.vlc.playID(widget.id);
                       widget.onCallback();
                     },
-                    child: Text(
+                    child: const Text(
                         'Play'
                     ),
                   ),
                   TextButton(
                       onPressed: ()=> Navigator.of(context).pop(),
-                      child: Text(
+                      child: const Text(
                         'Close'
                       ),
                   )
@@ -75,7 +74,7 @@ class _CustomlistitemState extends State<Customlistitem> {
         );
       },
       child: Container(
-        padding: EdgeInsets.all(10),
+        padding: const EdgeInsets.all(10),
         width: MediaQuery.of(context).size.width * 0.9,
         height: 80,
         child: Material(
@@ -90,7 +89,7 @@ class _CustomlistitemState extends State<Customlistitem> {
               mainAxisSize: MainAxisSize.max,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                SizedBox(width: 5),
+                const SizedBox(width: 5),
                 Container(
                   width: 50,
                   height: 50,
@@ -105,7 +104,7 @@ class _CustomlistitemState extends State<Customlistitem> {
                     ),
                   ),
                 ),
-                SizedBox(width: 10),
+                const SizedBox(width: 10),
                  SizedBox(
                   width: 180,
                   child: Text(
@@ -121,7 +120,7 @@ class _CustomlistitemState extends State<Customlistitem> {
                       widget.vlc.playID(widget.id);
                       widget.onCallback();
                     },
-                    icon: Icon(
+                    icon: const Icon(
                         Icons.play_arrow,
                         size: 30,
                         color: Colors.black87,
@@ -131,7 +130,7 @@ class _CustomlistitemState extends State<Customlistitem> {
                       widget.vlc.playID(widget.id);
                       widget.onCallback();
                     },
-                    icon: Icon(
+                    icon: const Icon(
                       Icons.play_arrow_outlined,
                       size: 30,
                       color: Colors.black87,
